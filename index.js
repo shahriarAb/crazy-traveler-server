@@ -19,6 +19,14 @@ async function run() {
         await client.connect();
         const database = client.db("travelInfo");
         const placeCollection = database.collection("destinations");
+        const bookingCollection = database.collection("bookings");
+
+        //POST api
+        app.post('/destinations', async (req, res) => {
+            const newDestination = req.body;
+            const result = await placeCollection.insertOne(newDestination);
+            res.json(result);
+        })
 
         //GET api
         app.get('/destinations', async (req, res) => {
@@ -35,10 +43,45 @@ async function run() {
             res.send(destination);
         })
 
+        //GET api to see bookings
+        app.get('/bookings', async (req, res) => {
+            const cursor = bookingCollection.find({});
+            const bookings = await cursor.toArray();
+            res.send(bookings);
+        })
+
+        //POST api (booking)
+        app.post('/bookings', async (req, res) => {
+            const newBooking = req.body;
+            const result = await bookingCollection.insertOne(newBooking);
+            res.json(result);
+        })
+
+        //DELETE api
+        app.delete('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = bookingCollection.deleteOne(query);
+            res.json(result);
+        })
+
+        //UPDATE api
+        app.put('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updateDoc = {
+                $set: {
+                    status: 'Approved'
+                }
+            };
+            const result = await bookingCollection.updateOne(filter, updateDoc, options);
+            res.json(result);
+        })
+
     }
     finally {
         // await client.close();
-
     }
 }
 run().catch(console.dir);
